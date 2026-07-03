@@ -22,44 +22,63 @@ public class TimetableService {
     @Autowired private TimetableSlotRepository slotRepo;
 
     public List<TimetableSlot> generateTimetable() {
-        // 1. Clear the old timetable from the database
+        // 1. Clear the old timetable
         slotRepo.deleteAll();
 
         List<Teacher> teachers = teacherRepo.findAll();
         List<Student> students = studentRepo.findAll();
         List<TimetableSlot> generatedSlots = new ArrayList<>();
 
-        // 2. The Booking System
-        Set<String> busyProfessors = new HashSet<>();
-
-        // Setup the college week (Matched to your 8-period schedule!)
-        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
-        String[] periods = {"Period 1", "Period 2", "Period 3", "Period 4", "Period 5", "Period 6", "Period 7", "Period 8"};
-
         if (teachers.isEmpty() || students.isEmpty()) {
             throw new RuntimeException("You must add at least one Professor and one Department first!");
         }
 
-        int shiftCounter = 0; // The secret sauce that makes them take turns!
+        // 2. The "Study Hall" Auto-Creator
+        Teacher studyHall = null;
+        for (Teacher t : teachers) {
+            if (t.getName().equals("Study Hall")) {
+                studyHall = t;
+                break;
+            }
+        }
 
-        // 3. The Fair-Share Algorithm (Time-First Loop)
+        // If a Study Hall doesn't exist, build it!
+        if (studyHall == null) {
+            studyHall = new Teacher();
+            studyHall.setName("Study Hall");
+            studyHall.setDepartment("Library");
+            studyHall = teacherRepo.save(studyHall);
+            teachers.add(studyHall); // Add to our working memory
+        }
+
+        // 3. The Booking System
+        Set<String> busyProfessors = new HashSet<>();
+        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
+        String[] periods = {"Period 1", "Period 2", "Period 3", "Period 4", "Period 5", "Period 6", "Period 7", "Period 8"};
+
+        int shiftCounter = 0;
+
+        // 4. The Smart Algorithm
         for (String day : days) {
             for (int i = 0; i < periods.length; i++) {
                 String currentPeriod = periods[i];
 
-                // Loop through students, but ROTATE who gets to pick first
                 for (int s = 0; s < students.size(); s++) {
-
                     int rotatingStudentIndex = (s + shiftCounter) % students.size();
                     Student student = students.get(rotatingStudentIndex);
 
                     Teacher assignedTeacher = null;
 
-                    // Find a free professor
+                    // Search for a free professor
                     for (int t = 0; t < teachers.size(); t++) {
                         Teacher potentialTeacher = teachers.get((t + shiftCounter) % teachers.size());
+
+                        // Ignore Study Hall in the normal loop, we ONLY use it as a backup
+                        if (potentialTeacher.getName().equals("Study Hall")) continue;
+
                         String busyKey = potentialTeacher.getId() + "-" + day + "-" + currentPeriod;
 
+                        // If free, lock them in!
                         if (!busyProfessors.contains(busyKey)) {
                             assignedTeacher = potentialTeacher;
                             busyProfessors.add(busyKey);
@@ -67,19 +86,25 @@ public class TimetableService {
                         }
                     }
 
-                    // Assign the class if a professor was found
-                    if (assignedTeacher != null) {
-                        String courseName = assignedTeacher.getDepartment() + " 101";
-                        TimetableSlot slot = new TimetableSlot(day, currentPeriod, courseName, assignedTeacher, student);
-                        generatedSlots.add(slot);
+                    // 5. The "No Free Period" Fallback
+                    if (assignedTeacher == null) {
+                        assignedTeacher = studyHall;
+                        // Notice we DO NOT add Study Hall to the busyProfessors memory,
+                        // because a library can hold unlimited students at once!
                     }
+
+                    // Dynamically name the course
+                    String courseName = assignedTeacher.getName().equals("Study Hall")
+                            ? "Self Study / Library"
+                            : assignedTeacher.getDepartment() + " 101";
+
+                    TimetableSlot slot = new TimetableSlot(day, currentPeriod, courseName, assignedTeacher, student);
+                    generatedSlots.add(slot);
                 }
-                // Increase the counter so the NEXT student group gets priority in the next period!
                 shiftCounter++;
             }
         }
 
-        // 4. Save to Cloud
         return slotRepo.saveAll(generatedSlots);
     }
 
