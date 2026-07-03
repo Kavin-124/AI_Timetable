@@ -1,8 +1,8 @@
 package AI_Timetable.controller;
 
 import AI_Timetable.entity.Teacher;
-import AI_Timetable.service.TeacherService;
-import jakarta.validation.Valid; // This is the new import for Validation!
+import AI_Timetable.repository.TeacherRepository;
+import AI_Timetable.repository.TimetableSlotRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,36 +12,25 @@ import java.util.List;
 @RequestMapping("/api/teachers")
 public class TeacherController {
 
-    private final TeacherService teacherService;
+    @Autowired private TeacherRepository teacherRepository;
 
-    // This gives the Waiter (Controller) access to the Manager (Service)
-    @Autowired
-    public TeacherController(TeacherService teacherService) {
-        this.teacherService = teacherService;
-    }
+    // 1. Bring in the Timetable memory
+    @Autowired private TimetableSlotRepository slotRepository;
 
-    // Endpoint 1: ADD a new teacher (Now with @Valid to check the rules!)
-    @PostMapping
-    public Teacher addTeacher(@Valid @RequestBody Teacher teacher) {
-        return teacherService.addTeacher(teacher);
-    }
-
-    // Endpoint 2: GET all teachers (Fetches the menu/list of teachers)
     @GetMapping
     public List<Teacher> getAllTeachers() {
-        return teacherService.getAllTeachers();
+        return teacherRepository.findAll();
     }
 
-    // Endpoint 3: DELETE a teacher by ID
+    @PostMapping
+    public Teacher addTeacher(@RequestBody Teacher teacher) {
+        return teacherRepository.save(teacher);
+    }
+
     @DeleteMapping("/{id}")
-    public String deleteTeacher(@PathVariable Long id) {
-        teacherService.deleteTeacher(id);
-        return "Teacher deleted successfully!";
-    }
-
-    // Endpoint 4: UPDATE a teacher's department
-    @PutMapping("/{id}")
-    public Teacher updateTeacher(@PathVariable Long id, @RequestParam String department) {
-        return teacherService.updateTeacherDepartment(id, department);
+    public void deleteTeacher(@PathVariable Long id) {
+        // 2. THE FIX: Clear the schedule before deleting the professor!
+        slotRepository.deleteAll();
+        teacherRepository.deleteById(id);
     }
 }
