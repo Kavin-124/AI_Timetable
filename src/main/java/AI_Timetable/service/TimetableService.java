@@ -29,56 +29,57 @@ public class TimetableService {
         List<Student> students = studentRepo.findAll();
         List<TimetableSlot> generatedSlots = new ArrayList<>();
 
-        // 2. The Booking System (Tracks who is teaching when)
+        // 2. The Booking System
         Set<String> busyProfessors = new HashSet<>();
 
-        // Setup the college week
+        // Setup the college week (Matched to your 8-period schedule!)
         String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
         String[] periods = {"Period 1", "Period 2", "Period 3", "Period 4", "Period 5", "Period 6", "Period 7", "Period 8"};
 
-        // Safety check
         if (teachers.isEmpty() || students.isEmpty()) {
             throw new RuntimeException("You must add at least one Professor and one Department first!");
         }
 
-        // 3. The Smart Generation Algorithm
-        for (Student student : students) {
-            for (String day : days) {
-                for (int i = 0; i < periods.length; i++) {
-                    String currentPeriod = periods[i];
+        int shiftCounter = 0; // The secret sauce that makes them take turns!
+
+        // 3. The Fair-Share Algorithm (Time-First Loop)
+        for (String day : days) {
+            for (int i = 0; i < periods.length; i++) {
+                String currentPeriod = periods[i];
+
+                // Loop through students, but ROTATE who gets to pick first
+                for (int s = 0; s < students.size(); s++) {
+
+                    int rotatingStudentIndex = (s + shiftCounter) % students.size();
+                    Student student = students.get(rotatingStudentIndex);
+
                     Teacher assignedTeacher = null;
 
-                    // Loop through available professors to find one who is FREE
+                    // Find a free professor
                     for (int t = 0; t < teachers.size(); t++) {
-                        // Start searching at a shifted index so different classes get different teachers
-                        Teacher potentialTeacher = teachers.get((i + student.getId().intValue() + t) % teachers.size());
-
-                        // Create a unique booking key (e.g., "1-Monday-Period 1")
+                        Teacher potentialTeacher = teachers.get((t + shiftCounter) % teachers.size());
                         String busyKey = potentialTeacher.getId() + "-" + day + "-" + currentPeriod;
 
-                        // If the professor is NOT busy, assign them and lock the slot!
                         if (!busyProfessors.contains(busyKey)) {
                             assignedTeacher = potentialTeacher;
-                            busyProfessors.add(busyKey); // Mark them as busy for this specific time
-                            break; // Stop looking for a professor
+                            busyProfessors.add(busyKey);
+                            break;
                         }
                     }
 
-                    // If we successfully found a free professor, create the class!
+                    // Assign the class if a professor was found
                     if (assignedTeacher != null) {
-                        // Dynamically name the course based on the Professor's department
                         String courseName = assignedTeacher.getDepartment() + " 101";
-
                         TimetableSlot slot = new TimetableSlot(day, currentPeriod, courseName, assignedTeacher, student);
                         generatedSlots.add(slot);
                     }
-                    // NOTE: If NO professor is free, the algorithm safely skips this block,
-                    // effectively giving the students a "Free Period" / "Self Study" block!
                 }
+                // Increase the counter so the NEXT student group gets priority in the next period!
+                shiftCounter++;
             }
         }
 
-        // 4. Save all the newly generated slots to Clever Cloud
+        // 4. Save to Cloud
         return slotRepo.saveAll(generatedSlots);
     }
 
