@@ -6,9 +6,8 @@
     <title>AI Timetable Generator</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
     <style>
-        body { background-color: #f4f7f6; padding-top: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; padding-top: 30px; font-family: 'Segoe UI', sans-serif; }
         .card { box-shadow: 0 4px 8px rgba(0,0,0,0.05); border: none; border-radius: 10px; margin-bottom: 20px; }
         .header-title { font-weight: bold; color: #2c3e50; }
         .btn-generate { background-color: #27ae60; color: white; font-weight: bold; }
@@ -64,10 +63,8 @@
 
     <div class="card p-4">
         <h4 class="mb-3">📅 Final Master Timetable</h4>
-
         <div id="timetableTable" class="bg-white p-3">
             <h2 class="pdf-title" id="pdfTitle">College Master Schedule</h2>
-
             <table class="table table-bordered table-striped mt-2">
                 <thead class="table-light">
                 <tr>
@@ -81,25 +78,20 @@
                 <tbody id="timetableBody"></tbody>
             </table>
         </div>
-
     </div>
 </div>
 
 <script>
     const API_URL = '/api';
 
-    // --- PROFESSORS ---
     function loadTeachers() {
         fetch(`${API_URL}/teachers`).then(res => res.json()).then(data => {
             const tbody = document.getElementById('teacherTableBody');
             tbody.innerHTML = '';
             data.forEach(t => {
-                // Hide the "Study Hall" backend bot from the frontend UI
                 if(t.name === 'Study Hall') return;
-
                 tbody.innerHTML += `<tr>
-                        <td>${t.name}</td>
-                        <td>${t.department}</td>
+                        <td>${t.name}</td><td>${t.department}</td>
                         <td><button class="btn btn-danger btn-sm" onclick="deleteTeacher(${t.id})">Delete</button></td>
                     </tr>`;
             });
@@ -110,10 +102,8 @@
         const name = document.getElementById('teacherName').value;
         const dept = document.getElementById('teacherDept').value;
         if(!name || !dept) return alert('Please enter both Name and Department!');
-
         fetch(`${API_URL}/teachers`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({name: name, department: dept})
         }).then(() => {
             document.getElementById('teacherName').value = '';
@@ -123,21 +113,16 @@
     }
 
     function deleteTeacher(id) {
-        fetch(`${API_URL}/teachers/${id}`, { method: 'DELETE' }).then(() => {
-            loadTeachers();
-            loadTimetable();
-        });
+        fetch(`${API_URL}/teachers/${id}`, { method: 'DELETE' }).then(() => { loadTeachers(); loadTimetable(); });
     }
 
-    // --- STUDENTS/DEPARTMENTS ---
     function loadStudents() {
         fetch(`${API_URL}/students`).then(res => res.json()).then(data => {
             const tbody = document.getElementById('studentTableBody');
             tbody.innerHTML = '';
             data.forEach(s => {
                 tbody.innerHTML += `<tr>
-                        <td>${s.name}</td>
-                        <td>${s.semester}</td>
+                        <td>${s.name}</td><td>${s.semester}</td>
                         <td><button class="btn btn-danger btn-sm" onclick="deleteStudent(${s.id})">Delete</button></td>
                     </tr>`;
             });
@@ -148,10 +133,8 @@
         const name = document.getElementById('studentName').value;
         const sem = document.getElementById('studentSem').value;
         if(!name || !sem) return alert('Please enter both Class Name and Semester!');
-
         fetch(`${API_URL}/students`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({name: name, semester: sem, department: 'General'})
         }).then(() => {
             document.getElementById('studentName').value = '';
@@ -161,18 +144,14 @@
     }
 
     function deleteStudent(id) {
-        fetch(`${API_URL}/students/${id}`, { method: 'DELETE' }).then(() => {
-            loadStudents();
-            loadTimetable();
-        });
+        fetch(`${API_URL}/students/${id}`, { method: 'DELETE' }).then(() => { loadStudents(); loadTimetable(); });
     }
 
-    // --- GENERATE & DISPLAY TIMETABLE ---
     function generateTimetable() {
         fetch(`${API_URL}/timetable/generate`, { method: 'POST' })
             .then(res => res.json())
             .then(() => loadTimetable())
-            .catch(err => alert("Error! Ensure you have at least 1 Professor and 1 Class before generating."));
+            .catch(err => alert("Error generating timetable!"));
     }
 
     function loadTimetable() {
@@ -181,11 +160,10 @@
             tbody.innerHTML = '';
 
             if(data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-4">No timetable generated yet. Add your data and click Generate!</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-4">No timetable generated yet.</td></tr>';
                 return;
             }
 
-            // Sort the data nicely by Day and Period!
             const daysOrder = { "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5 };
             data.sort((a, b) => {
                 if (daysOrder[a.day] !== daysOrder[b.day]) return daysOrder[a.day] - daysOrder[b.day];
@@ -193,7 +171,6 @@
             });
 
             data.forEach(slot => {
-                // Make Study Hall rows look slightly greyed out
                 const isStudyHall = slot.teacher.name === "Study Hall";
                 const rowClass = isStudyHall ? "table-secondary text-muted" : "";
 
@@ -208,35 +185,23 @@
         });
     }
 
-    // --- PDF EXPORT ENGINE ---
     function exportToPDF() {
-        // Grab the target div
         const element = document.getElementById('timetableTable');
-
-        // Show the hidden title just for the PDF
         document.getElementById('pdfTitle').style.display = 'block';
 
-        // Configure the camera settings
         const opt = {
-            margin:       0.3, // Small margin
-            filename:     'College_Timetable.pdf',
-            image:        { type: 'jpeg', quality: 1.0 },
-            html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' } // Landscape fits tables better
+            margin: 0.3, filename: 'College_Timetable.pdf',
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
         };
 
-        // Take the picture and download, then hide the title again
         html2pdf().set(opt).from(element).save().then(() => {
             document.getElementById('pdfTitle').style.display = 'none';
         });
     }
 
-    // Boot up the page!
-    window.onload = () => {
-        loadTeachers();
-        loadStudents();
-        loadTimetable();
-    };
+    window.onload = () => { loadTeachers(); loadStudents(); loadTimetable(); };
 </script>
 </body>
 </html>

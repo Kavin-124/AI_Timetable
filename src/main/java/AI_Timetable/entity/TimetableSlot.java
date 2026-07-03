@@ -1,6 +1,6 @@
 package AI_Timetable.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.*; // Note: If you are on an older Spring Boot, this might be javax.persistence.*
 
 @Entity
 public class TimetableSlot {
@@ -9,23 +9,22 @@ public class TimetableSlot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String dayOfWeek; // e.g., "Monday"
-    private String period;    // e.g., "Period 1"
-    private String subject;   // e.g., "Mathematics"
+    // These EXACT names are what JavaScript is looking for!
+    private String day;
+    private String period;
+    private String subject;
 
     @ManyToOne
-    @JoinColumn(name = "teacher_id")
     private Teacher teacher;
 
     @ManyToOne
-    @JoinColumn(name = "student_id")
     private Student student;
 
-    // Empty constructor
-    public TimetableSlot() {}
+    public TimetableSlot() {
+    }
 
-    public TimetableSlot(String dayOfWeek, String period, String subject, Teacher teacher, Student student) {
-        this.dayOfWeek = dayOfWeek;
+    public TimetableSlot(String day, String period, String subject, Teacher teacher, Student student) {
+        this.day = day;
         this.period = period;
         this.subject = subject;
         this.teacher = teacher;
@@ -34,10 +33,9 @@ public class TimetableSlot {
 
     // Getters and Setters
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
-    public String getDayOfWeek() { return dayOfWeek; }
-    public void setDayOfWeek(String dayOfWeek) { this.dayOfWeek = dayOfWeek; }
+    public String getDay() { return day; }
+    public void setDay(String day) { this.day = day; }
 
     public String getPeriod() { return period; }
     public void setPeriod(String period) { this.period = period; }
