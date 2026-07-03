@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <title>AI Timetable Generator</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
@@ -34,6 +35,9 @@
         <h2>Generate Smart Schedule</h2>
         <p>Make sure you have added at least one teacher and one student group below before generating.</p>
         <button class="btn-generate" onclick="generateTimetable()">🚀 Generate New Timetable Now</button>
+        <button id="downloadBtn" onclick="exportToPDF()" style="margin-left: 10px; background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+            📄 Download PDF
+        </button>
     </div>
 
     <div class="grid">
@@ -241,6 +245,23 @@
                 });
             })
             .catch(err => console.error("Could not fetch timetable:", err));
+    }
+
+    function exportToPDF() {
+        // 1. Find the table on the page (Make sure your table or the div holding it has id="timetableTable")
+        const element = document.getElementById("timetableTable");
+
+        // 2. Configure the PDF settings
+        const options = {
+            margin:       0.5,
+            filename:     'College_Master_Timetable.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' } // Landscape is best for wide tables!
+        };
+
+        // 3. Command the library to build and download the PDF
+        html2pdf().set(options).from(element).save();
     }
 </script>
 </body>
