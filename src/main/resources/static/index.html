@@ -30,21 +30,18 @@
 <div class="container">
     <h1>🎓 AI Timetable Generator</h1>
 
-    <!-- Generation Section -->
     <div class="card full-width" style="text-align: center;">
         <h2>Generate Smart Schedule</h2>
         <p>Make sure you have added at least one teacher and one student group below before generating.</p>
         <button class="btn-generate" onclick="generateTimetable()">🚀 Generate New Timetable Now</button>
     </div>
 
-    <!-- Management Section -->
     <div class="grid">
-        <!-- Teachers Card -->
         <div class="card">
             <h2>👨‍🏫 Teachers</h2>
-            <form class="form-group" id="teacherForm" onsubmit="addTeacher(event)">
-                <input type="text" id="teacherName" placeholder="Teacher Name" required>
-                <input type="text" id="teacherDept" placeholder="Department" required>
+            <form class="form-group" id="teacherForm">
+                <input type="text" id="teacherName" placeholder="Teacher Name" aria-label="Teacher Name" required>
+                <input type="text" id="teacherDept" placeholder="Department" aria-label="Department" required>
                 <button type="submit">Add</button>
             </form>
             <table>
@@ -53,12 +50,11 @@
             </table>
         </div>
 
-        <!-- Students Card -->
         <div class="card">
             <h2>👨‍🎓 Students</h2>
-            <form class="form-group" id="studentForm" onsubmit="addStudent(event)">
-                <input type="text" id="studentName" placeholder="Class Name (e.g., Grade 10)" required>
-                <input type="text" id="studentSem" placeholder="Semester/Year" required>
+            <form class="form-group" id="studentForm">
+                <input type="text" id="studentName" placeholder="Class Name (e.g., Grade 10)" aria-label="Class Name" required>
+                <input type="text" id="studentSemester" placeholder="Semester/Year" aria-label="Semester or Year" required>
                 <button type="submit">Add</button>
             </form>
             <table>
@@ -68,7 +64,6 @@
         </div>
     </div>
 
-    <!-- Results Section -->
     <div class="card full-width">
         <h2>📅 Final Master Timetable</h2>
         <table>
@@ -94,12 +89,19 @@
         fetchTeachers();
         fetchStudents();
         fetchTimetable();
+
+        // FIXED: Added event listeners here instead of using deprecated inline HTML
+        document.getElementById('teacherForm').addEventListener('submit', addTeacher);
+        document.getElementById('studentForm').addEventListener('submit', addStudent);
     };
 
     // --- TEACHER LOGIC ---
     function fetchTeachers() {
         fetch('/api/teachers')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("Status " + res.status);
+                return res.json();
+            })
             .then(data => {
                 const tbody = document.getElementById('teacherTableBody');
                 tbody.innerHTML = '';
@@ -107,7 +109,8 @@
                     tbody.innerHTML += `<tr><td>${t.name}</td><td>${t.department}</td>
                         <td><button class="btn-danger" onclick="deleteTeacher(${t.id})">Delete</button></td></tr>`;
                 });
-            });
+            })
+            .catch(err => console.error("Could not fetch teachers:", err));
     }
 
     function addTeacher(e) {
@@ -120,49 +123,77 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(teacher)
-        }).then(() => {
-            document.getElementById('teacherForm').reset();
-            fetchTeachers();
-        });
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("Backend error! Status: " + res.status);
+                return res.json();
+            })
+            .then(() => {
+                document.getElementById('teacherForm').reset();
+                fetchTeachers();
+            })
+            .catch(err => alert("Error adding teacher: " + err.message + "\n\nIs your server fully deployed?"));
     }
 
     function deleteTeacher(id) {
-        fetch('/api/teachers/' + id, { method: 'DELETE' }).then(() => fetchTeachers());
+        fetch('/api/teachers/' + id, { method: 'DELETE' })
+            .then(res => {
+                if (!res.ok) throw new Error("Status " + res.status);
+                fetchTeachers();
+            })
+            .catch(err => alert("Error deleting teacher: " + err.message));
     }
 
     // --- STUDENT LOGIC ---
     function fetchStudents() {
         fetch('/api/students')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("Status " + res.status);
+                return res.json();
+            })
             .then(data => {
                 const tbody = document.getElementById('studentTableBody');
                 tbody.innerHTML = '';
                 data.forEach(s => {
+                    // FIXED: updated to match the model property s.semester
                     tbody.innerHTML += `<tr><td>${s.name}</td><td>${s.semester}</td>
                         <td><button class="btn-danger" onclick="deleteStudent(${s.id})">Delete</button></td></tr>`;
                 });
-            });
+            })
+            .catch(err => console.error("Could not fetch students:", err));
     }
 
     function addStudent(e) {
         e.preventDefault();
         const student = {
             name: document.getElementById('studentName').value,
-            semester: document.getElementById('studentSem').value,
-            department: "General" // Defaulting department
+            // FIXED: changed from studentSem to studentSemester to match HTML
+            semester: document.getElementById('studentSemester').value,
+            department: "General"
         };
         fetch('/api/students', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(student)
-        }).then(() => {
-            document.getElementById('studentForm').reset();
-            fetchStudents();
-        });
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("Backend error! Status: " + res.status);
+                return res.json();
+            })
+            .then(() => {
+                document.getElementById('studentForm').reset();
+                fetchStudents();
+            })
+            .catch(err => alert("Error adding student: " + err.message + "\n\n(Hint: Did Render finish deploying the new Student Java files yet?)"));
     }
 
     function deleteStudent(id) {
-        fetch('/api/students/' + id, { method: 'DELETE' }).then(() => fetchStudents());
+        fetch('/api/students/' + id, { method: 'DELETE' })
+            .then(res => {
+                if (!res.ok) throw new Error("Status " + res.status);
+                fetchStudents();
+            })
+            .catch(err => alert("Error deleting student: " + err.message));
     }
 
     // --- TIMETABLE AI LOGIC ---
@@ -179,7 +210,7 @@
             .then(() => {
                 btn.innerText = "🚀 Generate New Timetable Now";
                 btn.style.background = "#2ecc71";
-                fetchTimetable(); // Refresh the table
+                fetchTimetable();
             })
             .catch(err => {
                 alert(err.message);
@@ -190,10 +221,13 @@
 
     function fetchTimetable() {
         fetch('/api/timetable')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("Status " + res.status);
+                return res.json();
+            })
             .then(data => {
                 const tbody = document.getElementById('timetableBody');
-                if(data.length === 0) return; // Keep placeholder if empty
+                if(data.length === 0) return;
 
                 tbody.innerHTML = '';
                 data.forEach(slot => {
@@ -205,7 +239,8 @@
                         <td>${slot.teacher.name}</td>
                     </tr>`;
                 });
-            });
+            })
+            .catch(err => console.error("Could not fetch timetable:", err));
     }
 </script>
 </body>
