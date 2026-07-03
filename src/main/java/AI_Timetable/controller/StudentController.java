@@ -1,8 +1,7 @@
 package AI_Timetable.controller;
 
 import AI_Timetable.entity.Student;
-import AI_Timetable.service.StudentService;
-import org.springframework.beans.factory.annotation.Autowired;
+import AI_Timetable.repository.StudentRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,22 +10,25 @@ import java.util.List;
 @RequestMapping("/api/students")
 public class StudentController {
 
-    @Autowired
-    private StudentService service;
+    private final StudentRepository studentRepository;
 
-    @PostMapping
-    public Student addStudent(@RequestBody Student student) {
-        return service.saveStudent(student);
+    public StudentController(StudentRepository studentRepository) {
+        this.studentRepository = studentRepository;
     }
 
     @GetMapping
-    public List<Student> getStudents() {
-        return service.getAllStudents();
+    public List<Student> getAllStudents() {
+        return studentRepository.findAll();
+    }
+
+    // THIS IS THE FIX: The @RequestBody and .save() ensure it goes to the database!
+    @PostMapping
+    public Student addStudent(@RequestBody Student student) {
+        return studentRepository.save(student);
     }
 
     @DeleteMapping("/{id}")
-    public String deleteStudent(@PathVariable Long id) {
-        service.deleteStudent(id);
-        return "Student successfully deleted!";
+    public void deleteStudent(@PathVariable Long id) {
+        studentRepository.deleteById(id);
     }
 }
