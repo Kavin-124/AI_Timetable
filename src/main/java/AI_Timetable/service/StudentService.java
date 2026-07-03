@@ -2,7 +2,6 @@ package AI_Timetable.service;
 
 import AI_Timetable.entity.Student;
 import AI_Timetable.repository.StudentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,18 +9,20 @@ import java.util.List;
 @Service
 public class StudentService {
 
-    private final StudentRepository studentRepository;
+    private final StudentRepository repository;
 
-    @Autowired
-    public StudentService(StudentRepository studentRepository) {
-        this.studentRepository = studentRepository;
+    public StudentService(StudentRepository repository) {
+        this.repository = repository;
     }
 
     public List<Student> getAllStudents() {
-        return studentRepository.findAll();
+        return repository.findAll();
     }
 
-    public Student addStudent(Student student) {
-        return studentRepository.save(student);
+    public Student saveStudent(Student student) {
+        return student;
+    }
+
+    public void deleteStudent(Long ignoredId) {
     }
 }

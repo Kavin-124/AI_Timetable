@@ -11,20 +11,22 @@ import java.util.List;
 @RequestMapping("/api/students")
 public class StudentController {
 
-    private final StudentService studentService;
-
     @Autowired
-    public StudentController(StudentService studentService) {
-        this.studentService = studentService;
-    }
+    private StudentService service;
 
     @PostMapping
     public Student addStudent(@RequestBody Student student) {
-        return studentService.addStudent(student);
+        return service.saveStudent(student);
     }
 
     @GetMapping
-    public List<Student> getAllStudents() {
-        return studentService.getAllStudents();
+    public List<Student> getStudents() {
+        return service.getAllStudents();
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteStudent(@PathVariable Long id) {
+        service.deleteStudent(id);
+        return "Student successfully deleted!";
     }
 }
