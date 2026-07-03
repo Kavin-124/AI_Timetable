@@ -70,38 +70,140 @@
 <script>
     const API_URL = '/api';
 
-    // Load functions (loadTeachers, addTeacher, deleteTeacher, loadStudents, addStudent, deleteStudent) remain the same...
-    // [Ensure you keep your existing functions for these here to keep the file complete]
+    // Helper to log errors so we know exactly why it fails
+    function handleError(err, action) {
+        console.error("Error during " + action + ":", err);
+        alert("System Error during " + action + ". Check Console (F12).");
+    }
+
+    // --- TEACHERS ---
+    function loadTeachers() {
+        fetch(`${API_URL}/teachers`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('teacherTableBody');
+                tbody.innerHTML = '';
+                data.forEach(t => {
+                    if(t.name === 'Study Hall') return;
+                    tbody.innerHTML += `<tr>
+                        <td>${t.name}</td><td>${t.department}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteTeacher(${t.id})">Delete</button></td>
+                    </tr>`;
+                });
+            })
+            .catch(err => handleError(err, "loading teachers"));
+    }
+
+    function addTeacher() {
+        const name = document.getElementById('teacherName').value;
+        const dept = document.getElementById('teacherDept').value;
+        if(!name || !dept) return alert('Fill all fields!');
+
+        fetch(`${API_URL}/teachers`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: name, department: dept})
+        }).then(() => {
+            document.getElementById('teacherName').value = '';
+            document.getElementById('teacherDept').value = '';
+            loadTeachers();
+        }).catch(err => handleError(err, "adding teacher"));
+    }
+
+    function deleteTeacher(id) {
+        fetch(`${API_URL}/teachers/${id}`, { method: 'DELETE' })
+            .then(() => { loadTeachers(); loadTimetable(); })
+            .catch(err => handleError(err, "deleting teacher"));
+    }
+
+    // --- STUDENTS ---
+    function loadStudents() {
+        fetch(`${API_URL}/students`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('studentTableBody');
+                tbody.innerHTML = '';
+                data.forEach(s => {
+                    tbody.innerHTML += `<tr>
+                        <td>${s.name}</td><td>${s.semester}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteStudent(${s.id})">Delete</button></td>
+                    </tr>`;
+                });
+            })
+            .catch(err => handleError(err, "loading students"));
+    }
+
+    function addStudent() {
+        const name = document.getElementById('studentName').value;
+        const sem = document.getElementById('studentSem').value;
+        if(!name || !sem) return alert('Fill all fields!');
+
+        fetch(`${API_URL}/students`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: name, semester: sem, department: 'General'})
+        }).then(() => {
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentSem').value = '';
+            loadStudents();
+        }).catch(err => handleError(err, "adding student"));
+    }
+
+    function deleteStudent(id) {
+        fetch(`${API_URL}/students/${id}`, { method: 'DELETE' })
+            .then(() => { loadStudents(); loadTimetable(); })
+            .catch(err => handleError(err, "deleting student"));
+    }
+
+    // --- TIMETABLE ---
+    function generateTimetable() {
+        fetch(`${API_URL}/timetable/generate`, { method: 'POST' })
+            .then(() => loadTimetable())
+            .catch(err => handleError(err, "generating timetable"));
+    }
 
     function loadTimetable() {
-        fetch(`${API_URL}/timetable`).then(res => res.json()).then(data => {
-            const tbody = document.getElementById('timetableBody');
-            tbody.innerHTML = '';
+        fetch(`${API_URL}/timetable`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('timetableBody');
+                tbody.innerHTML = '';
+                if(data.length === 0) return;
 
-            const daysOrder = { "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5 };
-            data.sort((a, b) => {
-                if (daysOrder[a.day] !== daysOrder[b.day]) return daysOrder[a.day] - daysOrder[b.day];
-                return a.period.localeCompare(b.period);
-            });
+                const daysOrder = { "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5 };
+                data.sort((a, b) => {
+                    if (daysOrder[a.day] !== daysOrder[b.day]) return daysOrder[a.day] - daysOrder[b.day];
+                    return a.period.localeCompare(b.period);
+                });
 
-            data.forEach(slot => {
-                // APPLYING COLOR CODING HERE
-                const isStudyHall = slot.subject.includes("Self Study");
-                const rowClass = isStudyHall ? "row-study" : "row-lecture";
-
-                tbody.innerHTML += `<tr class="${rowClass}">
+                data.forEach(slot => {
+                    const isStudyHall = slot.subject.includes("Self Study");
+                    const rowClass = isStudyHall ? "row-study" : "row-lecture";
+                    tbody.innerHTML += `<tr class="${rowClass}">
                         <td><strong>${slot.day}</strong></td>
                         <td>${slot.period}</td>
                         <td>${slot.student.name} [${slot.student.semester}]</td>
                         <td>${slot.subject}</td>
                         <td>${slot.teacher.name}</td>
                     </tr>`;
-            });
-        });
+                });
+            })
+            .catch(err => handleError(err, "loading timetable"));
     }
 
-    // [Add your other existing functions (loadTeachers, addTeacher, etc.) here]
-    // [Add the exportToPDF function here]
+    function exportToPDF() {
+        const element = document.getElementById('timetableTable');
+        document.getElementById('pdfTitle').style.display = 'block';
+        const opt = {
+            margin: 0.3, filename: 'College_Timetable.pdf',
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+        };
+        html2pdf().set(opt).from(element).save().then(() => {
+            document.getElementById('pdfTitle').style.display = 'none';
+        });
+    }
 
     window.onload = () => { loadTeachers(); loadStudents(); loadTimetable(); };
 </script>
