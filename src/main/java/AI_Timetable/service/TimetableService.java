@@ -10,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class TimetableService {
@@ -27,33 +29,56 @@ public class TimetableService {
         List<Student> students = studentRepo.findAll();
         List<TimetableSlot> generatedSlots = new ArrayList<>();
 
-        // Setup the week
+        // 2. The Booking System (Tracks who is teaching when)
+        Set<String> busyProfessors = new HashSet<>();
+
+        // Setup the college week
         String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
-        String[] periods = {"Period 1", "Period 2", "Period 3", "Period 4", "Period 5"};
-        String[] subjects = {"Mathematics", "Science", "History", "English", "Computer Science"};
+        String[] periods = {"Period 1", "Period 2", "Period 3", "Period 4", "Period 5", "Period 6", "Period 7", "Period 8"};
 
         // Safety check
         if (teachers.isEmpty() || students.isEmpty()) {
-            throw new RuntimeException("You must add at least one Teacher and one Student group first!");
+            throw new RuntimeException("You must add at least one Professor and one Department first!");
         }
 
-        // 2. The Generation Algorithm
+        // 3. The Smart Generation Algorithm
         for (Student student : students) {
             for (String day : days) {
                 for (int i = 0; i < periods.length; i++) {
+                    String currentPeriod = periods[i];
+                    Teacher assignedTeacher = null;
 
-                    // Simple logic to cycle through available teachers and subjects
-                    Teacher assignedTeacher = teachers.get((i + student.getId().intValue()) % teachers.size());
-                    String assignedSubject = subjects[i % subjects.length];
+                    // Loop through available professors to find one who is FREE
+                    for (int t = 0; t < teachers.size(); t++) {
+                        // Start searching at a shifted index so different classes get different teachers
+                        Teacher potentialTeacher = teachers.get((i + student.getId().intValue() + t) % teachers.size());
 
-                    // Create the slot
-                    TimetableSlot slot = new TimetableSlot(day, periods[i], assignedSubject, assignedTeacher, student);
-                    generatedSlots.add(slot);
+                        // Create a unique booking key (e.g., "1-Monday-Period 1")
+                        String busyKey = potentialTeacher.getId() + "-" + day + "-" + currentPeriod;
+
+                        // If the professor is NOT busy, assign them and lock the slot!
+                        if (!busyProfessors.contains(busyKey)) {
+                            assignedTeacher = potentialTeacher;
+                            busyProfessors.add(busyKey); // Mark them as busy for this specific time
+                            break; // Stop looking for a professor
+                        }
+                    }
+
+                    // If we successfully found a free professor, create the class!
+                    if (assignedTeacher != null) {
+                        // Dynamically name the course based on the Professor's department
+                        String courseName = assignedTeacher.getDepartment() + " 101";
+
+                        TimetableSlot slot = new TimetableSlot(day, currentPeriod, courseName, assignedTeacher, student);
+                        generatedSlots.add(slot);
+                    }
+                    // NOTE: If NO professor is free, the algorithm safely skips this block,
+                    // effectively giving the students a "Free Period" / "Self Study" block!
                 }
             }
         }
 
-        // 3. Save all the newly generated slots to Clever Cloud
+        // 4. Save all the newly generated slots to Clever Cloud
         return slotRepo.saveAll(generatedSlots);
     }
 
