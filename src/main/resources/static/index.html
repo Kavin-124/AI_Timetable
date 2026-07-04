@@ -15,7 +15,6 @@
         .row-study { background-color: #f8f9fa !important; color: #6c757d; font-style: italic; }
         .pdf-title { display: none; text-align: center; margin-bottom: 20px; font-weight: bold; }
 
-        /* Loading Screen Overlay */
         #loadingOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(4px);
@@ -54,10 +53,15 @@
         <div class="col-md-6">
             <div class="card p-4">
                 <h4>👨‍🏫 Teachers</h4>
-                <div class="d-flex gap-2 mb-3">
-                    <input type="text" id="teacherName" class="form-control" placeholder="Name">
-                    <input type="text" id="teacherDept" class="form-control" placeholder="Dept">
-                    <button class="btn btn-primary px-4" onclick="addTeacher()">Add</button>
+                <div class="d-flex flex-column gap-2 mb-3">
+                    <div class="d-flex gap-2">
+                        <input type="text" id="teacherName" class="form-control" placeholder="Name">
+                        <input type="text" id="teacherDept" class="form-control" placeholder="Dept">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <input type="text" id="teacherOff" class="form-control" placeholder="Day Off (e.g. Friday)">
+                        <button class="btn btn-primary px-4" onclick="addTeacher()">Add</button>
+                    </div>
                 </div>
                 <table class="table table-hover"><tbody id="teacherTableBody"></tbody></table>
             </div>
@@ -100,16 +104,29 @@
             const tbody = document.getElementById('teacherTableBody'); tbody.innerHTML = '';
             data.forEach(t => {
                 if(t.name === 'Study Hall') return;
-                tbody.innerHTML += `<tr><td>${t.name}</td><td>${t.department}</td><td><button class="btn btn-danger btn-sm" onclick="deleteTeacher(${t.id})">Delete</button></td></tr>`;
+                const offTag = t.daysOff ? ` <span class="badge bg-secondary ms-1">Off: ${t.daysOff}</span>` : '';
+                tbody.innerHTML += `<tr><td>${t.name}${offTag}</td><td>${t.department}</td><td><button class="btn btn-danger btn-sm" onclick="deleteTeacher(${t.id})">Delete</button></td></tr>`;
             });
         }).catch(err => handleError(err, "loading teachers"));
     }
 
     function addTeacher() {
-        const name = document.getElementById('teacherName').value, dept = document.getElementById('teacherDept').value;
-        if(!name || !dept) return alert('Fill all fields!');
-        fetch(`${API_URL}/teachers`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name: name, department: dept}) })
-            .then(() => { document.getElementById('teacherName').value = ''; document.getElementById('teacherDept').value = ''; loadTeachers(); }).catch(err => handleError(err, "adding teacher"));
+        const name = document.getElementById('teacherName').value;
+        const dept = document.getElementById('teacherDept').value;
+        const off = document.getElementById('teacherOff').value;
+        if(!name || !dept) return alert('Fill Name and Dept!');
+
+        fetch(`${API_URL}/teachers`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: name, department: dept, daysOff: off})
+        })
+            .then(() => {
+                document.getElementById('teacherName').value = '';
+                document.getElementById('teacherDept').value = '';
+                document.getElementById('teacherOff').value = '';
+                loadTeachers();
+            }).catch(err => handleError(err, "adding teacher"));
     }
 
     function deleteTeacher(id) { fetch(`${API_URL}/teachers/${id}`, { method: 'DELETE' }).then(() => loadTeachers()); }

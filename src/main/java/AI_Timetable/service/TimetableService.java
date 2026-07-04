@@ -60,6 +60,12 @@ public class TimetableService {
                     for (int t = 0; t < teachers.size(); t++) {
                         Teacher potentialTeacher = teachers.get((t + shiftCounter) % teachers.size());
                         if (potentialTeacher.getName().equals("Study Hall")) continue;
+
+                        // PROFESSOR AVAILABILITY CHECK
+                        if (potentialTeacher.getDaysOff() != null && potentialTeacher.getDaysOff().contains(day)) {
+                            continue; // Skip this teacher if it's their day off
+                        }
+
                         String busyKey = potentialTeacher.getId() + "-" + day + "-" + currentPeriod;
                         if (!busyProfessors.contains(busyKey)) {
                             assignedTeacher = potentialTeacher; busyProfessors.add(busyKey); break;
@@ -67,7 +73,6 @@ public class TimetableService {
                     }
                     if (assignedTeacher == null) assignedTeacher = studyHall;
 
-                    // Removed " 101" string addition here!
                     String courseName = assignedTeacher.getName().equals("Study Hall") ? "Self Study" : assignedTeacher.getDepartment();
 
                     TimetableSlot slot = new TimetableSlot(day, currentPeriod, courseName, assignedTeacher, student, configName);
