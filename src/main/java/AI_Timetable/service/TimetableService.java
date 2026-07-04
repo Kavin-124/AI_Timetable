@@ -50,7 +50,18 @@ public class TimetableService {
 
         Set<String> busyProfessors = new HashSet<>();
         String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
-        String[] periods = {"Period 1", "Period 2", "Period 3", "Period 4", "Period 5", "Period 6", "Period 7", "Period 8"};
+
+        // --- NEW FEATURE: Real College Time Slots ---
+        String[] periods = {
+                "09:00 AM - 10:00 AM", // Period 1
+                "10:00 AM - 11:00 AM", // Period 2
+                "11:15 AM - 12:15 PM", // Period 3 (After 15 min break)
+                "12:15 PM - 01:15 PM", // Period 4
+                "02:00 PM - 03:00 PM", // Period 5 (After 45 min lunch)
+                "03:00 PM - 04:00 PM", // Period 6
+                "04:15 PM - 05:15 PM", // Period 7 (After 15 min break)
+                "05:15 PM - 06:15 PM"  // Period 8
+        };
 
         int shiftCounter = 0;
 
