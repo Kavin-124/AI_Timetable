@@ -35,6 +35,7 @@
                 <option value="">Select a saved schedule...</option>
             </select>
             <button class="btn btn-info px-4 text-white" style="font-weight: bold;" onclick="loadSelectedConfig()">📂 Load</button>
+            <button class="btn btn-outline-danger px-4" onclick="deleteSelectedConfig()">🗑️ Delete</button>
             <button class="btn btn-primary px-4" onclick="exportToPDF()">📄 Download PDF</button>
             <button class="btn btn-danger px-4" onclick="logoutUser()">🔒 Log Out</button>
         </div>
@@ -155,6 +156,23 @@
         const configName = document.getElementById('configSelect').value;
         if (!configName) return alert("Please select a schedule from the dropdown first!");
         loadSpecificTimetable(configName);
+    }
+
+    function deleteSelectedConfig() {
+        const configName = document.getElementById('configSelect').value;
+        if (!configName) return alert("Please select a schedule from the dropdown to delete!");
+
+        // Ask for confirmation so you don't delete by accident!
+        if(confirm(`Are you sure you want to permanently delete the schedule: "${configName}"?`)) {
+            fetch(`${API_URL}/timetable/config?name=${encodeURIComponent(configName)}`, { method: 'DELETE' })
+                .then(() => {
+                    alert("Schedule deleted successfully!");
+                    document.getElementById('timetableBody').innerHTML = ''; // Wipe the board clean
+                    document.getElementById('pdfTitle').innerText = "College Master Schedule";
+                    loadConfigList(); // Refresh the dropdown menu
+                })
+                .catch(err => handleError(err, "deleting schedule"));
+        }
     }
 
     function loadSpecificTimetable(configName) {

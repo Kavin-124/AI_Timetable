@@ -87,4 +87,10 @@ public class TimetableService {
     public List<String> getAllConfigNames() {
         return slotRepo.findAllScheduleNames();
     }
+
+    // --- NEW: Delete a specific schedule ---
+    @Transactional
+    public void deleteTimetableConfig(String configName) {
+        slotRepo.deleteByScheduleName(configName);
+    }
 }

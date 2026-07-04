@@ -30,4 +30,10 @@ public class TimetableController {
     public List<String> getConfigs() {
         return service.getAllConfigNames();
     }
+
+    // --- NEW: Delete Endpoint ---
+    @DeleteMapping("/config")
+    public void deleteConfig(@RequestParam String name) {
+        service.deleteTimetableConfig(name);
+    }
 }
