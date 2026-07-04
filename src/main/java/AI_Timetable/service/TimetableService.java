@@ -68,7 +68,7 @@ public class TimetableService {
                     }
                     if (assignedTeacher == null) assignedTeacher = studyHall;
 
-                    String courseName = assignedTeacher.getName().equals("Study Hall") ? "Self Study" : assignedTeacher.getDepartment() + " 101";
+                    String courseName = assignedTeacher.getName().equals("Study Hall") ? "Self Study" : assignedTeacher.getDepartment();
 
                     // ADD THE LABEL TO THE SLOT
                     TimetableSlot slot = new TimetableSlot(day, currentPeriod, courseName, assignedTeacher, student, configName);
