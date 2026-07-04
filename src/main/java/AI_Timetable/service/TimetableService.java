@@ -24,7 +24,6 @@ public class TimetableService {
 
     @Transactional
     public List<TimetableSlot> generateTimetable(String configName) {
-        // WIPE ONLY the current config so we don't delete other saved schedules
         slotRepo.deleteByScheduleName(configName);
 
         List<Teacher> teachers = teacherRepo.findAll();
@@ -68,9 +67,9 @@ public class TimetableService {
                     }
                     if (assignedTeacher == null) assignedTeacher = studyHall;
 
+                    // Removed " 101" string addition here!
                     String courseName = assignedTeacher.getName().equals("Study Hall") ? "Self Study" : assignedTeacher.getDepartment();
 
-                    // ADD THE LABEL TO THE SLOT
                     TimetableSlot slot = new TimetableSlot(day, currentPeriod, courseName, assignedTeacher, student, configName);
                     generatedSlots.add(slot);
                 }
@@ -88,7 +87,6 @@ public class TimetableService {
         return slotRepo.findAllScheduleNames();
     }
 
-    // --- NEW: Delete a specific schedule ---
     @Transactional
     public void deleteTimetableConfig(String configName) {
         slotRepo.deleteByScheduleName(configName);
