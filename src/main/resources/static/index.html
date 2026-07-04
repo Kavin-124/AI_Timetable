@@ -25,8 +25,11 @@
 
     <div class="card p-3 mb-4 text-center">
         <div class="d-flex justify-content-center gap-3">
-            <button class="btn btn-generate btn-lg px-5" onclick="generateTimetable()">🚀 Generate New Timetable Now</button>
-            <button class="btn btn-primary btn-lg px-4" onclick="exportToPDF()">📄 Download PDF</button>
+                <div class="d-flex justify-content-center gap-3">
+                    <button class="btn btn-generate btn-lg px-5" onclick="generateTimetable()">🚀 Generate New Timetable Now</button>
+                    <button class="btn btn-primary btn-lg px-4" onclick="exportToPDF()">📄 Download PDF</button>
+                    <button class="btn btn-danger btn-lg px-4" onclick="logoutUser()">🔒 Log Out</button>
+                </div>
         </div>
     </div>
 
@@ -220,6 +223,15 @@
         html2pdf().set(opt).from(element).save().then(() => {
             document.getElementById('pdfTitle').style.display = 'none';
         });
+    }
+
+    // --- SECURITY ---
+    function logoutUser() {
+        fetch('/logout', { method: 'POST' })
+            .then(() => {
+                window.location.href = '/login?logout';
+            })
+            .catch(err => handleError(err, "logging out"));
     }
 
     window.onload = () => { loadTeachers(); loadStudents(); loadTimetable(); };
