@@ -36,6 +36,9 @@
             </select>
             <button class="btn btn-info px-4 text-white" style="font-weight: bold;" onclick="loadSelectedConfig()">📂 Load</button>
             <button class="btn btn-outline-danger px-4" onclick="deleteSelectedConfig()">🗑️ Delete</button>
+
+            <button class="btn btn-success px-4" onclick="exportToExcel()">📊 Download Excel</button>
+
             <button class="btn btn-primary px-4" onclick="exportToPDF()">📄 Download PDF</button>
             <button class="btn btn-danger px-4" onclick="logoutUser()">🔒 Log Out</button>
         </div>
@@ -228,6 +231,49 @@
 
     // Boot up!
     window.onload = () => { loadTeachers(); loadStudents(); loadConfigList(); };
+
+
+    // --- NEW: EXCEL EXPORT LOGIC ---
+    function exportToExcel() {
+        // Grab the actual table from the HTML
+        const table = document.getElementById('timetableTable').querySelector('table');
+        if (!table) return alert("No table found to export!");
+
+        let csvContent = "";
+        const rows = table.querySelectorAll('tr');
+
+        // Loop through every row and column to build the CSV format
+        rows.forEach(row => {
+            let rowData = [];
+            const cols = row.querySelectorAll('th, td');
+
+            cols.forEach(col => {
+                // Grab the text and wrap it in quotes (in case a subject has a comma in its name)
+                let data = col.innerText.replace(/"/g, '""');
+                rowData.push(`"${data}"`);
+            });
+
+            // Add a new line after every row
+            csvContent += rowData.join(",") + "\n";
+        });
+
+        // Create a downloadable file in the browser
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        // Name the file based on the currently loaded schedule
+        const configName = document.getElementById('configSelect').value || "Master";
+
+        link.setAttribute("href", url);
+        link.setAttribute("download", `${configName}_Schedule.csv`);
+        link.style.visibility = 'hidden';
+
+        // Click the hidden link to trigger the download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 </script>
 </body>
 </html>
