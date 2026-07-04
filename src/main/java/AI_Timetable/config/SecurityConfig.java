@@ -13,19 +13,23 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Allows our static HTML buttons to talk to the server safely
+                .csrf(csrf -> csrf.disable()) // Disable CSRF for simplicity with static HTML
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().authenticated() // Locks EVERYTHING until logged in
+                        .requestMatchers("/login.html", "/css/**", "/js/**").permitAll() // Allow everyone to see the login page
+                        .anyRequest().authenticated() // Lock everything else
                 )
-                .formLogin(login -> login
-                        .defaultSuccessUrl("/index.html", true) // Sends you to the dashboard after logging in
+                .formLogin(form -> form
+                        .loginPage("/login.html") // Tell Spring to use our custom page!
+                        .loginProcessingUrl("/login") // Where the form submits
+                        .defaultSuccessUrl("/", true) // Where to go after login
                         .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout") // Sends you back to login screen after logging out
+                        .logoutSuccessUrl("/login.html?logout")
                         .permitAll()
                 );
+
         return http.build();
     }
 }

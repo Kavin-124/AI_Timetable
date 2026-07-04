@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AI Timetable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            /* A nice gradient background to make it look modern */
+            background: linear-gradient(135deg, #e0f7fa 0%, #80deea 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .login-card h2 {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+        .btn-custom {
+            background-color: #27ae60;
+            color: white;
+            font-weight: bold;
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .btn-custom:hover {
+            background-color: #219653;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h2>🎓 AI Timetable</h2>
+    <p class="text-muted mb-4">Admin Login Panel</p>
+
+    <form action="/login" method="POST">
+        <div class="mb-3 text-start">
+            <label class="form-label text-muted">Username</label>
+            <input type="text" name="username" class="form-control" placeholder="Enter admin" required autofocus>
+        </div>
+
+        <div class="mb-4 text-start">
+            <label class="form-label text-muted">Password</label>
+            <input type="password" name="password" class="form-control" placeholder="Enter admin123" required>
+        </div>
+
+        <button type="submit" class="btn btn-custom">Secure Login</button>
+    </form>
+</div>
+
+</body>
+</html>
