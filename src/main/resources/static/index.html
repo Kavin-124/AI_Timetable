@@ -11,11 +11,8 @@
         .card { box-shadow: 0 4px 8px rgba(0,0,0,0.05); border: none; border-radius: 10px; margin-bottom: 20px; }
         .header-title { font-weight: bold; color: #2c3e50; }
         .btn-generate { background-color: #27ae60; color: white; font-weight: bold; }
-
-        /* UI POLISH: Color Coding */
         .row-lecture { background-color: #e8f4fd !important; }
         .row-study { background-color: #f8f9fa !important; color: #6c757d; font-style: italic; }
-
         .pdf-title { display: none; text-align: center; margin-bottom: 20px; font-weight: bold; }
     </style>
 </head>
@@ -23,13 +20,23 @@
 <div class="container">
     <h2 class="text-center header-title mb-4">🎓 AI Timetable Generator</h2>
 
-    <div class="card p-3 mb-4 text-center">
-        <div class="d-flex justify-content-center gap-3">
-            <div class="d-flex justify-content-center gap-3">
-                <button class="btn btn-generate btn-lg px-5" onclick="generateTimetable()">🚀 Generate New Timetable Now</button>
-                <button class="btn btn-primary btn-lg px-4" onclick="exportToPDF()">📄 Download PDF</button>
-                <button class="btn btn-danger btn-lg px-4" onclick="logoutUser()">🔒 Log Out</button>
-            </div>
+    <div class="card p-4 mb-4 text-center">
+        <h5 class="text-muted mb-3">Schedule Control Center</h5>
+
+        <div class="d-flex justify-content-center gap-3 mb-3">
+            <input type="text" id="configNameInput" class="form-control w-25" placeholder="Name it (e.g. Fall 2026)">
+            <button class="btn btn-generate px-4" onclick="generateTimetable()">🚀 Generate & Save Schedule</button>
+        </div>
+
+        <hr class="w-50 mx-auto">
+
+        <div class="d-flex justify-content-center gap-3 mt-3">
+            <select id="configSelect" class="form-select w-25">
+                <option value="">Select a saved schedule...</option>
+            </select>
+            <button class="btn btn-info px-4 text-white" style="font-weight: bold;" onclick="loadSelectedConfig()">📂 Load</button>
+            <button class="btn btn-primary px-4" onclick="exportToPDF()">📄 Download PDF</button>
+            <button class="btn btn-danger px-4" onclick="logoutUser()">🔒 Log Out</button>
         </div>
     </div>
 
@@ -59,7 +66,7 @@
     </div>
 
     <div class="card p-4">
-        <h4 class="mb-3">📅 Final Master Timetable</h4>
+        <h4 class="mb-3">📅 Master Timetable</h4>
         <div id="timetableTable" class="bg-white p-3">
             <h2 class="pdf-title" id="pdfTitle">College Master Schedule</h2>
             <table class="table table-bordered mt-2">
@@ -73,126 +80,103 @@
 <script>
     const API_URL = '/api';
 
-    // Helper to log errors so we know exactly why it fails
     function handleError(err, action) {
         console.error("Error during " + action + ":", err);
         alert("System Error during " + action + ". Check Console (F12).");
     }
 
-    // --- TEACHERS ---
+    // --- TEACHERS & STUDENTS ---
     function loadTeachers() {
-        fetch(`${API_URL}/teachers`)
-            .then(res => res.json())
-            .then(data => {
-                const tbody = document.getElementById('teacherTableBody');
-                tbody.innerHTML = '';
-                data.forEach(t => {
-                    if(t.name === 'Study Hall') return;
-                    tbody.innerHTML += `<tr>
-                        <td>${t.name}</td><td>${t.department}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="deleteTeacher(${t.id})">Delete</button></td>
-                    </tr>`;
-                });
-            })
-            .catch(err => handleError(err, "loading teachers"));
+        fetch(`${API_URL}/teachers`).then(res => res.json()).then(data => {
+            const tbody = document.getElementById('teacherTableBody');
+            tbody.innerHTML = '';
+            data.forEach(t => {
+                if(t.name === 'Study Hall') return;
+                tbody.innerHTML += `<tr><td>${t.name}</td><td>${t.department}</td><td><button class="btn btn-danger btn-sm" onclick="deleteTeacher(${t.id})">Delete</button></td></tr>`;
+            });
+        }).catch(err => handleError(err, "loading teachers"));
     }
 
     function addTeacher() {
         const name = document.getElementById('teacherName').value;
         const dept = document.getElementById('teacherDept').value;
         if(!name || !dept) return alert('Fill all fields!');
-
-        fetch(`${API_URL}/teachers`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({name: name, department: dept})
-        }).then(() => {
-            document.getElementById('teacherName').value = '';
-            document.getElementById('teacherDept').value = '';
-            loadTeachers();
-        }).catch(err => handleError(err, "adding teacher"));
+        fetch(`${API_URL}/teachers`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name: name, department: dept}) })
+            .then(() => { document.getElementById('teacherName').value = ''; document.getElementById('teacherDept').value = ''; loadTeachers(); })
+            .catch(err => handleError(err, "adding teacher"));
     }
 
-    function deleteTeacher(id) {
-        fetch(`${API_URL}/teachers/${id}`, { method: 'DELETE' })
-            .then(() => { loadTeachers(); loadTimetable(); })
-            .catch(err => handleError(err, "deleting teacher"));
-    }
+    function deleteTeacher(id) { fetch(`${API_URL}/teachers/${id}`, { method: 'DELETE' }).then(() => loadTeachers()); }
 
-    // --- STUDENTS ---
     function loadStudents() {
-        fetch(`${API_URL}/students`)
-            .then(res => res.json())
-            .then(data => {
-                const tbody = document.getElementById('studentTableBody');
-                tbody.innerHTML = '';
-                data.forEach(s => {
-                    tbody.innerHTML += `<tr>
-                        <td>${s.name}</td><td>${s.semester}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="deleteStudent(${s.id})">Delete</button></td>
-                    </tr>`;
-                });
-            })
-            .catch(err => handleError(err, "loading students"));
+        fetch(`${API_URL}/students`).then(res => res.json()).then(data => {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
+            data.forEach(s => { tbody.innerHTML += `<tr><td>${s.name}</td><td>${s.semester}</td><td><button class="btn btn-danger btn-sm" onclick="deleteStudent(${s.id})">Delete</button></td></tr>`; });
+        }).catch(err => handleError(err, "loading students"));
     }
 
     function addStudent() {
         const name = document.getElementById('studentName').value;
         const sem = document.getElementById('studentSem').value;
         if(!name || !sem) return alert('Fill all fields!');
-
-        fetch(`${API_URL}/students`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({name: name, semester: sem, department: 'General'})
-        }).then(() => {
-            document.getElementById('studentName').value = '';
-            document.getElementById('studentSem').value = '';
-            loadStudents();
-        }).catch(err => handleError(err, "adding student"));
+        fetch(`${API_URL}/students`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name: name, semester: sem, department: 'General'}) })
+            .then(() => { document.getElementById('studentName').value = ''; document.getElementById('studentSem').value = ''; loadStudents(); })
+            .catch(err => handleError(err, "adding student"));
     }
 
-    function deleteStudent(id) {
-        fetch(`${API_URL}/students/${id}`, { method: 'DELETE' })
-            .then(() => { loadStudents(); loadTimetable(); })
-            .catch(err => handleError(err, "deleting student"));
+    function deleteStudent(id) { fetch(`${API_URL}/students/${id}`, { method: 'DELETE' }).then(() => loadStudents()); }
+
+    // --- NEW: SAVE / LOAD TIMETABLE LOGIC ---
+    function loadConfigList() {
+        fetch(`${API_URL}/timetable/configs`)
+            .then(res => res.json())
+            .then(data => {
+                const select = document.getElementById('configSelect');
+                select.innerHTML = '<option value="">Select a saved schedule...</option>';
+                data.forEach(name => { select.innerHTML += `<option value="${name}">${name}</option>`; });
+            })
+            .catch(err => handleError(err, "loading config list"));
     }
 
-    // --- TIMETABLE ---
     function generateTimetable() {
-        fetch(`${API_URL}/timetable/generate`, { method: 'POST' })
-            .then(() => loadTimetable())
+        const configName = document.getElementById('configNameInput').value;
+        if (!configName) return alert("Please type a name for this schedule (e.g. Fall 2026) before generating!");
+
+        fetch(`${API_URL}/timetable/generate?name=${encodeURIComponent(configName)}`, { method: 'POST' })
+            .then(() => {
+                loadConfigList(); // Update the dropdown
+                loadSpecificTimetable(configName); // Draw the table
+            })
             .catch(err => handleError(err, "generating timetable"));
     }
 
-    function loadTimetable() {
-        fetch(`${API_URL}/timetable`)
+    function loadSelectedConfig() {
+        const configName = document.getElementById('configSelect').value;
+        if (!configName) return alert("Please select a schedule from the dropdown first!");
+        loadSpecificTimetable(configName);
+    }
+
+    function loadSpecificTimetable(configName) {
+        fetch(`${API_URL}/timetable?name=${encodeURIComponent(configName)}`)
             .then(res => res.json())
             .then(data => {
                 const tbody = document.getElementById('timetableBody');
                 tbody.innerHTML = '';
-                if(data.length === 0) return;
+                if(data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-4">No data found for this schedule.</td></tr>';
+                    return;
+                }
 
-                // 1. Teach JS the order of days
                 const daysOrder = { "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5 };
-
-                // 2. Teach JS the chronological order of the time slots!
                 const periodsOrder = {
-                    "09:00 AM - 10:00 AM": 1,
-                    "10:00 AM - 11:00 AM": 2,
-                    "11:15 AM - 12:15 PM": 3,
-                    "12:15 PM - 01:15 PM": 4,
-                    "02:00 PM - 03:00 PM": 5,
-                    "03:00 PM - 04:00 PM": 6,
-                    "04:15 PM - 05:15 PM": 7,
-                    "05:15 PM - 06:15 PM": 8
+                    "09:00 AM - 10:00 AM": 1, "10:00 AM - 11:00 AM": 2, "11:15 AM - 12:15 PM": 3,
+                    "12:15 PM - 01:15 PM": 4, "02:00 PM - 03:00 PM": 5, "03:00 PM - 04:00 PM": 6,
+                    "04:15 PM - 05:15 PM": 7, "05:15 PM - 06:15 PM": 8
                 };
 
-                // 3. Sort by Day first, then by Time Slot
                 data.sort((a, b) => {
-                    if (daysOrder[a.day] !== daysOrder[b.day]) {
-                        return daysOrder[a.day] - daysOrder[b.day];
-                    }
+                    if (daysOrder[a.day] !== daysOrder[b.day]) return daysOrder[a.day] - daysOrder[b.day];
                     return (periodsOrder[a.period] || 99) - (periodsOrder[b.period] || 99);
                 });
 
@@ -200,41 +184,32 @@
                     const isStudyHall = slot.subject.includes("Self Study");
                     const rowClass = isStudyHall ? "row-study" : "row-lecture";
                     tbody.innerHTML += `<tr class="${rowClass}">
-                        <td><strong>${slot.day}</strong></td>
-                        <td>${slot.period}</td>
-                        <td>${slot.student.name} [${slot.student.semester}]</td>
-                        <td>${slot.subject}</td>
-                        <td>${slot.teacher.name}</td>
-                    </tr>`;
+                            <td><strong>${slot.day}</strong></td><td>${slot.period}</td>
+                            <td>${slot.student.name} [${slot.student.semester}]</td>
+                            <td>${slot.subject}</td><td>${slot.teacher.name}</td>
+                        </tr>`;
                 });
+
+                // Bonus UI trick: Update the PDF Title to match the schedule name!
+                document.getElementById('pdfTitle').innerText = "Master Schedule: " + configName;
             })
             .catch(err => handleError(err, "loading timetable"));
     }
 
+    // --- EXPORT & SECURITY ---
     function exportToPDF() {
         const element = document.getElementById('timetableTable');
         document.getElementById('pdfTitle').style.display = 'block';
-        const opt = {
-            margin: 0.3, filename: 'College_Timetable.pdf',
-            image: { type: 'jpeg', quality: 1.0 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
-        };
-        html2pdf().set(opt).from(element).save().then(() => {
-            document.getElementById('pdfTitle').style.display = 'none';
-        });
+        const opt = { margin: 0.3, filename: 'College_Timetable.pdf', image: { type: 'jpeg', quality: 1.0 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } };
+        html2pdf().set(opt).from(element).save().then(() => document.getElementById('pdfTitle').style.display = 'none');
     }
 
-    // --- SECURITY ---
     function logoutUser() {
-        fetch('/logout', { method: 'POST' })
-            .then(() => {
-                window.location.href = '/login?logout';
-            })
-            .catch(err => handleError(err, "logging out"));
+        fetch('/logout', { method: 'POST' }).then(() => { window.location.href = '/login?logout'; });
     }
 
-    window.onload = () => { loadTeachers(); loadStudents(); loadTimetable(); };
+    // Boot up!
+    window.onload = () => { loadTeachers(); loadStudents(); loadConfigList(); };
 </script>
 </body>
 </html>
