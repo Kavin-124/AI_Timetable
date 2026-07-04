@@ -2,15 +2,18 @@ package AI_Timetable.repository;
 
 import AI_Timetable.entity.TimetableSlot;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
+import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
-@Repository
 public interface TimetableSlotRepository extends JpaRepository<TimetableSlot, Long> {
-    // Helper method to clear the old timetable when generating a new one
-    void deleteAll();
 
-    // Helper to view timetable by a specific student group
-    List<TimetableSlot> findByStudentId(Long studentId);
+    // Find a specific schedule by its name
+    List<TimetableSlot> findByScheduleName(String scheduleName);
+
+    // Delete ONLY a specific schedule by its name
+    void deleteByScheduleName(String scheduleName);
+
+    // Get a list of all the unique schedule names we have saved
+    @Query("SELECT DISTINCT t.scheduleName FROM TimetableSlot t WHERE t.scheduleName IS NOT NULL")
+    List<String> findAllScheduleNames();
 }

@@ -11,18 +11,23 @@ import java.util.List;
 @RequestMapping("/api/timetable")
 public class TimetableController {
 
-    @Autowired
-    private TimetableService service;
+    @Autowired private TimetableService service;
 
-    // This is the button that triggers the AI generation!
+    // Generates a schedule and attaches a name to it
     @PostMapping("/generate")
-    public List<TimetableSlot> generate() {
-        return service.generateTimetable();
+    public List<TimetableSlot> generate(@RequestParam String name) {
+        return service.generateTimetable(name);
     }
 
-    // This fetches the generated schedule to show on the screen
+    // Fetches a specific schedule by its name
     @GetMapping
-    public List<TimetableSlot> getTimetable() {
-        return service.getTimetable();
+    public List<TimetableSlot> getTimetable(@RequestParam String name) {
+        return service.getTimetable(name);
+    }
+
+    // Gets a list of all saved schedule names for our dropdown menu
+    @GetMapping("/configs")
+    public List<String> getConfigs() {
+        return service.getAllConfigNames();
     }
 }
