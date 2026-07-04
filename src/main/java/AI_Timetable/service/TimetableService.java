@@ -93,7 +93,7 @@ public class TimetableService {
 
                     String courseName = assignedTeacher.getName().equals("Study Hall")
                             ? "Self Study"
-                            : assignedTeacher.getDepartment() + " 101";
+                            : assignedTeacher.getDepartment();
 
                     TimetableSlot slot = new TimetableSlot(day, currentPeriod, courseName, assignedTeacher, student);
                     generatedSlots.add(slot);
