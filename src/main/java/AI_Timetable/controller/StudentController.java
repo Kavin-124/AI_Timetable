@@ -4,6 +4,7 @@ import AI_Timetable.entity.Student;
 import AI_Timetable.repository.StudentRepository;
 import AI_Timetable.repository.TimetableSlotRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional; // The magic import!
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,8 +14,6 @@ import java.util.List;
 public class StudentController {
 
     @Autowired private StudentRepository studentRepository;
-
-    // 1. Bring in the Timetable memory
     @Autowired private TimetableSlotRepository slotRepository;
 
     @GetMapping
@@ -27,9 +26,10 @@ public class StudentController {
         return studentRepository.save(student);
     }
 
+    // THE FIX: @Transactional forces the database to do this in the perfect order
     @DeleteMapping("/{id}")
+    @Transactional
     public void deleteStudent(@PathVariable Long id) {
-        // 2. THE FIX: Clear the schedule before deleting the student!
         slotRepository.deleteAll();
         studentRepository.deleteById(id);
     }
