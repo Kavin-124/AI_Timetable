@@ -170,10 +170,27 @@
                 tbody.innerHTML = '';
                 if(data.length === 0) return;
 
+                // 1. Teach JS the order of days
                 const daysOrder = { "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5 };
+
+                // 2. Teach JS the chronological order of the time slots!
+                const periodsOrder = {
+                    "09:00 AM - 10:00 AM": 1,
+                    "10:00 AM - 11:00 AM": 2,
+                    "11:15 AM - 12:15 PM": 3,
+                    "12:15 PM - 01:15 PM": 4,
+                    "02:00 PM - 03:00 PM": 5,
+                    "03:00 PM - 04:00 PM": 6,
+                    "04:15 PM - 05:15 PM": 7,
+                    "05:15 PM - 06:15 PM": 8
+                };
+
+                // 3. Sort by Day first, then by Time Slot
                 data.sort((a, b) => {
-                    if (daysOrder[a.day] !== daysOrder[b.day]) return daysOrder[a.day] - daysOrder[b.day];
-                    return a.period.localeCompare(b.period);
+                    if (daysOrder[a.day] !== daysOrder[b.day]) {
+                        return daysOrder[a.day] - daysOrder[b.day];
+                    }
+                    return (periodsOrder[a.period] || 99) - (periodsOrder[b.period] || 99);
                 });
 
                 data.forEach(slot => {

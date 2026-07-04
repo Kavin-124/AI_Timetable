@@ -8,6 +8,7 @@ import AI_Timetable.repository.TeacherRepository;
 import AI_Timetable.repository.TimetableSlotRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // The magic fix for duplicates!
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -21,7 +22,9 @@ public class TimetableService {
     @Autowired private StudentRepository studentRepo;
     @Autowired private TimetableSlotRepository slotRepo;
 
+    @Transactional // This locks the database so it wipes old data cleanly before adding new data
     public List<TimetableSlot> generateTimetable() {
+        // 1. Wipe the slate clean
         slotRepo.deleteAll();
 
         List<Teacher> teachers = teacherRepo.findAll();
@@ -51,7 +54,7 @@ public class TimetableService {
         Set<String> busyProfessors = new HashSet<>();
         String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 
-        // --- NEW FEATURE: Real College Time Slots ---
+        // Real College Time Slots
         String[] periods = {
                 "09:00 AM - 10:00 AM", // Period 1
                 "10:00 AM - 11:00 AM", // Period 2
@@ -93,7 +96,7 @@ public class TimetableService {
 
                     String courseName = assignedTeacher.getName().equals("Study Hall")
                             ? "Self Study"
-                            : assignedTeacher.getDepartment();
+                            : assignedTeacher.getDepartment() + " 101";
 
                     TimetableSlot slot = new TimetableSlot(day, currentPeriod, courseName, assignedTeacher, student);
                     generatedSlots.add(slot);
