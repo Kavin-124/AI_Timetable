@@ -1,40 +1,57 @@
 # 🎓 AI Timetable Generator
 
-A full-stack, automated college scheduling system designed to eliminate manual timetable creation. Built with Java Spring Boot and MySQL, this application uses a smart algorithm to generate conflict-free schedules, manage professor availability, and export data seamlessly.
+A full-stack college scheduling system built with Java 21, Spring Boot, and MySQL. It automates timetable generation, checks professor scheduling conflicts, manages availability, and exports schedules.
 
-**Live Demo:** [AI Timetable Generator](https://ai-timetable-ph11.onrender.com)  
-*(Note: The live demo is protected by Spring Security. Use credentials Username: `admin` / Password: `admin@123` to test it.)*
+**Live Demo:** [AI Timetable Generator](https://ai-timetable-ph11.onrender.com)
 
----
+> The demo requires valid credentials configured by the project owner. Credentials are not published in this repository.
 
-## 🚀 Features
+## Features
 
-* **Smart AI Generation:** Automatically assigns classes, teachers, and subjects using a rotational balancing algorithm.
-* **Conflict Prevention:** Real-time checks ensure a professor is never assigned to two classes simultaneously.
-* **Professor Availability (Days Off):** The system respects specific days off (e.g., "Fridays") and will automatically assign a substitute or a "Self Study" period.
-* **Save & Load Configurations:** Save multiple semesters (e.g., "Fall 2026") directly to the database and instantly switch between them using the control dashboard.
-* **Enterprise Security:** The entire application is locked behind a robust Spring Security authentication system.
-* **One-Click Exports:** Download schedules as a formatted CSV (for Microsoft Excel) or a high-quality landscape PDF.
-* **Modern UI/UX:** Responsive Bootstrap 5 design with automatic color-coding for lectures vs. study halls, and sleek glass-morphism loading animations.
+- Automated timetable generation using a rotational balancing algorithm.
+- Conflict checks to prevent a professor from being assigned to overlapping classes.
+- Professor day-off handling, including substitute or self-study periods.
+- Save and load semester configurations from MySQL.
+- CSV and landscape PDF timetable exports.
+- Responsive Bootstrap 5 interface.
 
----
+## Technology
 
-## 🛠️ Tech Stack
+- **Backend:** Java 21, Spring Boot, Spring Web, Spring Data JPA, Spring Security, Maven
+- **Database:** MySQL
+- **Frontend:** HTML5, CSS3, JavaScript, Bootstrap 5
+- **Deployment:** Render
 
-**Backend:**
-* Java 17
-* Spring Boot (Web, Data JPA, Security)
-* Maven
+## Run locally
 
-**Database:**
-* MySQL (Hosted on Clever Cloud)
+1. Install Java 21 and MySQL.
+2. Create a database for the application.
+3. Configure the environment variables below in your IDE or shell.
+4. Run the application with the Maven wrapper:
 
-**Frontend:**
-* HTML5, CSS3, Vanilla JavaScript
-* Bootstrap 5
-* html2pdf.js (For PDF rendering)
+```bash
+./mvnw spring-boot:run
+```
 
-**Deployment:**
-* Render (Web Service)
+On Windows:
 
----
+```powershell
+.`\mvnw.cmd spring-boot:run
+```
+
+### Required environment variables
+
+| Variable | Purpose |
+|---|---|
+| `APP_ADMIN_USERNAME` | Login username |
+| `APP_ADMIN_PASSWORD` | Strong login password |
+| `APP_DB_URL` | JDBC URL, e.g. `jdbc:mysql://localhost:3306/timetable` |
+| `APP_DB_USERNAME` | Database username |
+| `APP_DB_PASSWORD` | Database password |
+| `PORT` | Optional server port (defaults to 8080) |
+
+Do not commit real credentials or place them in source files. Configure secrets in your local environment or hosting provider's secret/environment-variable settings.
+
+## Project status
+
+This repository contains the application source and Maven build configuration. Deployment availability and runtime behaviour depend on the environment variables and database service configured by the maintainer.
